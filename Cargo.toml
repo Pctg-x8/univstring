@@ -3,6 +3,10 @@ name = "univstring"
 version = "1.0.0"
 authors = ["S.Percentage <Syn.Tri.Naga@gmail.com>"]
 description = "The Universal String(Rust String, CString, Wide(UTF-16) CString) trait"
+license = "MIT"
+license-file = "LICENSE"
+documentation = "https://docs.rs/univstring"
+repository = "https://github.com/Pctg-x8/univstring"
 
 [dependencies]
 widestring = "0.2"
