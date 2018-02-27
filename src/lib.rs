@@ -71,23 +71,23 @@ impl UnivString for CStr
 {
     fn to_cstr(&self) -> Result<Cow<CStr>, ConversionError<CNulError>> { Ok(Cow::Borrowed(self)) }
     fn to_wcstr(&self) -> Result<Cow<WideCStr>, ConversionError<WideNulError>> { self.to_str()?.to_wcstr() }
-    fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { self.to_str().map(Cow::Borrowed) }
+    fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { self.to_str().map(Cow::Borrowed).map_err(Into::into) }
 }
 impl UnivString for CString
 {
     fn to_cstr(&self) -> Result<Cow<CStr>, ConversionError<CNulError>> { Ok(Cow::Borrowed(self)) }
     fn to_wcstr(&self) -> Result<Cow<WideCStr>, ConversionError<WideNulError>> { self.to_str()?.to_wcstr() }
-    fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { self.to_str().map(Cow::Borrowed) }
+    fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { self.to_str().map(Cow::Borrowed).map_err(Into::into) }
 }
 impl UnivString for WideCStr
 {
-    fn to_cstr(&self) -> Result<Cow<CStr>, ConversionError<CNulError>> { CString::new(&self.to_string()?).map(Cow::Owned).map_err(Into::into) }
+    fn to_cstr(&self) -> Result<Cow<CStr>, ConversionError<CNulError>> { CString::new(self.to_string()?).map(Cow::Owned).map_err(Into::into) }
     fn to_wcstr(&self) -> Result<Cow<WideCStr>, ConversionError<WideNulError>> { Ok(Cow::Borrowed(self)) }
     fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { self.to_string().map(Cow::Owned).map_err(Into::into) }
 }
 impl UnivString for WideCString
 {
-    fn to_cstr(&self) -> Result<Cow<CStr>, ConversionError<CNulError>> { CString::new(&self.to_string()?).map(Cow::Owned).map_err(Into::into) }
+    fn to_cstr(&self) -> Result<Cow<CStr>, ConversionError<CNulError>> { CString::new(WideCStr::to_string(self)?).map(Cow::Owned).map_err(Into::into) }
     fn to_wcstr(&self) -> Result<Cow<WideCStr>, ConversionError<WideNulError>> { Ok(Cow::Borrowed(self)) }
-    fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { self.to_string().map(Cow::Owned).map_err(Into::into) }
+    fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { WideCStr::to_string(self).map(Cow::Owned).map_err(Into::into) }
 }
