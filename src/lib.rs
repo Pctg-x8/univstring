@@ -1,5 +1,5 @@
 
-extern crate widestring;use widestring::*;
+extern crate widestring; use widestring::*;
 use widestring::NulError as WideNulError;
 use std::ffi::*; use std::ffi::NulError as CNulError;
 use std::borrow::Cow;
@@ -54,13 +54,16 @@ impl<NE> From<FromUtf16Error> for ConversionError<NE> { fn from(e: FromUtf16Erro
 /// # Examples
 /// 
 /// ```
-/// use univstring::*;
+/// # extern crate univstring; extern crate widestring;
+/// # fn main() {
+/// use univstring::UnivString;
 /// use std::ffi::CString;
 /// use widestring::WideCString;
+/// use std::borrow::Cow;
 /// 
 /// let org: &str = "Hello World";
-/// assert_eq!(org.to_cstr().unwrap(), CString::new("Hello World").unwrap());
-/// assert_eq!(org.to_wcstr().unwrap(), WideCString::from_str("Hello World").unwrap());
+/// assert_eq!(org.to_cstr().unwrap(), Cow::Owned(CString::new("Hello World").unwrap()));
+/// assert_eq!(org.to_wcstr().unwrap(), Cow::Owned(WideCString::from_str("Hello World").unwrap()));
 /// 
 /// // more optimal way to take some cstrings as argument
 /// fn take_wstr<S: UnivString + ?Sized>(s: &S)
@@ -68,6 +71,11 @@ impl<NE> From<FromUtf16Error> for ConversionError<NE> { fn from(e: FromUtf16Erro
 ///   let _ws = s.to_wcstr().unwrap();
 ///   // do something with the WideCString...
 /// }
+/// // call the function
+/// take_wstr("test");
+/// let existing_cstr = CString::new("...").unwrap();
+/// take_wstr(&existing_cstr);
+/// # }
 /// ```
 pub trait UnivString
 {
