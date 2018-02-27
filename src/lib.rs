@@ -49,10 +49,47 @@ impl From<WideNulError> for ConversionError<WideNulError> { fn from(e: WideNulEr
 impl<NE> From<Utf8Error> for ConversionError<NE> { fn from(e: Utf8Error) -> Self { ConversionError::InvalidChar(e) } }
 impl<NE> From<FromUtf16Error> for ConversionError<NE> { fn from(e: FromUtf16Error) -> Self { ConversionError::InvalidWChar(e) } }
 
+/// The Universal String trait
+/// 
+/// # Examples
+/// 
+/// ```
+/// use univstring::*;
+/// use std::ffi::CString;
+/// use widestring::WideCString;
+/// 
+/// let org: &str = "Hello World";
+/// assert_eq!(org.to_cstr().unwrap(), CString::new("Hello World").unwrap());
+/// assert_eq!(org.to_wcstr().unwrap(), WideCString::from_str("Hello World").unwrap());
+/// 
+/// // more optimal way to take some cstrings as argument
+/// fn take_wstr<S: UnivString + ?Sized>(s: &S)
+/// {
+///   let _ws = s.to_wcstr().unwrap();
+///   // do something with the WideCString...
+/// }
+/// ```
 pub trait UnivString
 {
+    /// Converts a string to `CString` or `CStr`(if possible)
+    /// 
+    /// # Errors
+    /// 
+    /// - This function will return a CNulError(`std::ffi::NulError`) if the string contains an internal 0 byte.
+    /// - This function will return a `FromUtf16Error` if the string contains unrecognizable UTF-16 characters as UTF-8.
     fn to_cstr(&self) -> Result<Cow<CStr>, ConversionError<CNulError>>;
+    /// Converts a string to `WideCString` or `WideCStr`(if possible)
+    /// 
+    /// # Errors
+    /// 
+    /// - This function will return a WideNulError(`std::ffi::WideNulError`) if the string contains an internal 0 byte.
+    /// - This function will return a `Utf8Error` if the string contains unrecognizable characters as UTF-8.
     fn to_wcstr(&self) -> Result<Cow<WideCStr>, ConversionError<WideNulError>>;
+    /// Converts a string to `String` or `str`(if possible)
+    /// 
+    /// # Errors
+    /// 
+    /// - This function will return a `Utf8Error` or a `FromUtf16Error` if the string contains unrecognizable characters as UTF-8.
     fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>>;
 }
 impl UnivString for str
