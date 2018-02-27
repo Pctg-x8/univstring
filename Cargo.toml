@@ -1,0 +1,8 @@
+[package]
+name = "ustring"
+version = "0.1.0"
+authors = ["S.Percentage <Syn.Tri.Naga@gmail.com>"]
+description = "The Universal String(Rust String, CString, Wide(UTF-16) CString) trait"
+
+[dependencies]
+widestring = "0.2"
