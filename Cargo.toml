@@ -1,6 +1,6 @@
 [package]
 name = "univstring"
-version = "1.0.0"
+version = "0.2.2"
 authors = ["S.Percentage <Syn.Tri.Naga@gmail.com>"]
 description = "The Universal String(Rust String, CString, Wide(UTF-16) CString) trait"
 license = "MIT"
