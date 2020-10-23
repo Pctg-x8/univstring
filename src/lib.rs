@@ -110,7 +110,17 @@ pub trait UnivString
     /// 
     /// - This function will return a `Utf8Error` or a `FromUtf16Error` if the string contains unrecognizable characters as UTF-8.
     fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>>;
+    /// Converts a string to `String` or `str`(if possible)
+    /// 
+    /// # Errors
+    /// 
+    /// - This function will return a `Utf8Error` or a `FromUtf16Error` if the string contains unrecognizable characters as UTF-8.
+    fn to_wcstr(&self) -> Result<Cow<WideCStr>, ConversionError<WideNulError<WideChar>>>;
 }
+
+trait CharElement { type Char; }
+impl<U: UChar> CharElement for UCStr<U> { type Char = U; }
+impl<U: UChar> CharElement for UCString<U> { type Char = U; }
 
 impl UnivString for str
 {
@@ -118,6 +128,7 @@ impl UnivString for str
     fn to_ucstr16(&self) -> Result<Cow<UCStr<u16>>, ConversionError<WideNulError<u16>>> { U16CString::from_str(self).map(Cow::Owned).map_err(Into::into) }
     fn to_ucstr32(&self) -> Result<Cow<UCStr<u32>>, ConversionError<WideNulError<u32>>> { U32CString::from_str(self).map(Cow::Owned).map_err(Into::into) }
     fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { Ok(ToString::to_string(self).into()) }
+    fn to_wcstr(&self) -> Result<Cow<WideCStr>, ConversionError<WideNulError<WideChar>>> { WideCString::from_str(self).map(Cow::Owned).map_err(Into::into) }
 }
 impl UnivString for String
 {
@@ -125,6 +136,7 @@ impl UnivString for String
     fn to_ucstr16(&self) -> Result<Cow<UCStr<u16>>, ConversionError<WideNulError<u16>>> { U16CString::from_str(self).map(Cow::Owned).map_err(Into::into) }
     fn to_ucstr32(&self) -> Result<Cow<UCStr<u32>>, ConversionError<WideNulError<u32>>> { U32CString::from_str(self).map(Cow::Owned).map_err(Into::into) }
     fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { Ok(ToString::to_string(self).into()) }
+    fn to_wcstr(&self) -> Result<Cow<WideCStr>, ConversionError<WideNulError<WideChar>>> { WideCString::from_str(self).map(Cow::Owned).map_err(Into::into) }
 }
 impl UnivString for CStr
 {
@@ -132,6 +144,7 @@ impl UnivString for CStr
     fn to_ucstr16(&self) -> Result<Cow<UCStr<u16>>, ConversionError<WideNulError<u16>>> { self.to_str()?.to_ucstr16() }
     fn to_ucstr32(&self) -> Result<Cow<UCStr<u32>>, ConversionError<WideNulError<u32>>> { self.to_str()?.to_ucstr32() }
     fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { self.to_str().map(Cow::Borrowed).map_err(Into::into) }
+    fn to_wcstr(&self) -> Result<Cow<WideCStr>, ConversionError<WideNulError<WideChar>>> { self.to_str()?.to_wcstr() }
 }
 impl UnivString for CString
 {
@@ -139,6 +152,7 @@ impl UnivString for CString
     fn to_ucstr16(&self) -> Result<Cow<UCStr<u16>>, ConversionError<WideNulError<u16>>> { self.to_str()?.to_ucstr16() }
     fn to_ucstr32(&self) -> Result<Cow<UCStr<u32>>, ConversionError<WideNulError<u32>>> { self.to_str()?.to_ucstr32() }
     fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { self.to_str().map(Cow::Borrowed).map_err(Into::into) }
+    fn to_wcstr(&self) -> Result<Cow<WideCStr>, ConversionError<WideNulError<WideChar>>> { self.to_str()?.to_wcstr() }
 }
 
 impl UnivString for U16CStr
@@ -147,6 +161,14 @@ impl UnivString for U16CStr
     fn to_ucstr16(&self) -> Result<Cow<UCStr<u16>>, ConversionError<WideNulError<u16>>> { Ok(Cow::Borrowed(self)) }
     fn to_ucstr32(&self) -> Result<Cow<UCStr<u32>>, ConversionError<WideNulError<u32>>> { U32CString::from_str(self.to_string()?).map(Into::into).map_err(From::from) }
     fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { self.to_string().map(Cow::Owned).map_err(Into::into) }
+    fn to_wcstr(&self) -> Result<Cow<WideCStr>, ConversionError<WideNulError<WideChar>>> {
+        if std::mem::size_of::<<WideCStr as CharElement>::Char>() == 2 {
+            // no conversion ほんとはtransmuteいらないはず
+            Ok(Cow::Borrowed(unsafe { std::mem::transmute(self) }))
+        } else {
+            WideCString::from_str(self.to_string()?).map(Into::into).map_err(From::from)
+        }
+    }
 }
 impl UnivString for U16CString
 {
@@ -154,6 +176,14 @@ impl UnivString for U16CString
     fn to_ucstr16(&self) -> Result<Cow<UCStr<u16>>, ConversionError<WideNulError<u16>>> { Ok(Cow::Borrowed(self)) }
     fn to_ucstr32(&self) -> Result<Cow<UCStr<u32>>, ConversionError<WideNulError<u32>>> { U16CStr::to_ucstr32(self) }
     fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { std::ops::Deref::deref(self).to_string().map(Into::into).map_err(Into::into) }
+    fn to_wcstr(&self) -> Result<Cow<WideCStr>, ConversionError<WideNulError<WideChar>>> {
+        if std::mem::size_of::<<WideCStr as CharElement>::Char>() == 2 {
+            // no conversion ほんとはtransmuteいらないはず
+            Ok(Cow::Borrowed(unsafe { std::mem::transmute(self as &U16CStr) }))
+        } else {
+            U16CStr::to_wcstr(self)
+        }
+    }
 }
 impl UnivString for U32CStr
 {
@@ -161,6 +191,14 @@ impl UnivString for U32CStr
     fn to_ucstr16(&self) -> Result<Cow<UCStr<u16>>, ConversionError<WideNulError<u16>>> { U16CString::from_str(self.to_string()?).map(Into::into).map_err(From::from) }
     fn to_ucstr32(&self) -> Result<Cow<UCStr<u32>>, ConversionError<WideNulError<u32>>> { Ok(Cow::Borrowed(self)) }
     fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { self.to_string().map(Cow::Owned).map_err(Into::into) }
+    fn to_wcstr(&self) -> Result<Cow<WideCStr>, ConversionError<WideNulError<WideChar>>> {
+        if std::mem::size_of::<<WideCStr as CharElement>::Char>() == 4 {
+            // no conversion ほんとはtransmuteいらないはず
+            Ok(Cow::Borrowed(unsafe { std::mem::transmute(self) }))
+        } else {
+            WideCString::from_str(self.to_string()?).map(Into::into).map_err(From::from)
+        }
+    }
 }
 impl UnivString for U32CString
 {
@@ -168,4 +206,12 @@ impl UnivString for U32CString
     fn to_ucstr16(&self) -> Result<Cow<UCStr<u16>>, ConversionError<WideNulError<u16>>> { U32CStr::to_ucstr16(self) }
     fn to_ucstr32(&self) -> Result<Cow<UCStr<u32>>, ConversionError<WideNulError<u32>>> { Ok(Cow::Borrowed(self)) }
     fn to_string(&self) -> Result<Cow<str>, ConversionError<CNulError>> { std::ops::Deref::deref(self).to_string().map(Into::into).map_err(Into::into) }
+    fn to_wcstr(&self) -> Result<Cow<WideCStr>, ConversionError<WideNulError<WideChar>>> {
+        if std::mem::size_of::<<WideCStr as CharElement>::Char>() == 4 {
+            // no conversion ほんとはtransmuteいらないはず
+            Ok(Cow::Borrowed(unsafe { std::mem::transmute(self as &U32CStr) }))
+        } else {
+            U32CStr::to_wcstr(self)
+        }
+    }
 }
