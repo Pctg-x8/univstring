@@ -1,12 +1,13 @@
 [package]
 name = "univstring"
-version = "0.2.2"
+version = "0.4.3"
 authors = ["S.Percentage <Syn.Tri.Naga@gmail.com>"]
-description = "The Universal String(Rust String, CString, Wide(UTF-16) CString) trait"
+description = "The Universal String(Rust String, CString, Wide(UTF-16/UTF-32) CString) trait"
 license = "MIT"
 license-file = "LICENSE"
 documentation = "https://docs.rs/univstring"
 repository = "https://github.com/Pctg-x8/univstring"
+edition = "2018"
 
 [dependencies]
-widestring = "0.2"
+widestring = "0.4"
